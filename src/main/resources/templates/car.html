@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Car Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- свій CSS підключаємо ПІСЛЯ Bootstrap, щоб він перекривав його стилі -->
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="py-5">
+
+<div class="container mt-5">
+    <div class="mb-4 d-flex flex-row justify-content-between">
+        <h2 class="fw-bold text-white"><span class="bi bi-car-front-fill text-danger me-2"></span>List cars</h2>
+        <button type="button" data-bs-toggle="modal" data-bs-target="#createCarModal" class="btn btn-danger">Add car
+        </button>
+    </div>
+
+    <div th:if="${carDtoList.isEmpty()}" class="alert alert-info d-flex align-items-center gap-2 shadow-sm">
+        <span class="bi bi-info-circle-fill fs-5"></span>
+        <div>
+            <strong>No cars found.</strong>
+            <div class="small">There are currently no cars to display.</div>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        <div class="col" th:each="car: ${carDtoList}">
+            <div class="card car-card h-100 shadow-sm position-relative overflow-hidden">
+                <div class="card-body d-flex flex-column p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-danger bg-opacity-10 text-danger mb-2 px-2 py-1 fw-semibold">
+                                <span class="bi bi-calendar-event me-1"></span>
+                                <span th:text="${car.productionYear}">2020</span>
+                            </span>
+                            <h4 class="card-title fw-bold text-white mb-1" th:text="${car.brand + ' ' + car.model}">Brand Model</h4>
+                        </div>
+                        <span class="text-secondary small">ID: <span th:text="${car.id}">1</span></span>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-3 text-secondary">
+                        <i class="bi bi-fuel-pump fs-5 me-2 text-danger"></i>
+                        <span class="fw-medium" th:text="${car.fuelType}">Petrol</span>
+                        <i class="bi bi-palette fs-5 ms-4 me-2 text-danger"></i>
+                        <span class="fw-medium" th:text="${car.color != null and !car.color.isEmpty()} ? ${car.color} : '-'">White</span>
+                    </div>
+                    <hr class="text-secondary opacity-25 my-2">
+                    <div class="row mt-auto pt-2 g-2">
+                        <div class="col-6">
+                            <div class="p-2 info-box rounded-3 d-flex align-items-center">
+                                <span class="bi bi-speedometer2 text-secondary fs-5 me-2"></span>
+                                <div>
+                                    <small class="d-block text-secondary" style="font-size: 0.75rem;">Mileage</small>
+                                    <span class="fw-semibold text-white"><span th:text="${car.mileage}">45000</span> km</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 info-box rounded-3 d-flex align-items-center">
+                                <span class="bi bi-currency-dollar text-secondary fs-5 me-2"></span>
+                                <div>
+                                    <small class="d-block text-secondary" style="font-size: 0.75rem;">Price</small>
+                                    <span class="fw-semibold text-success" th:text="${car.price}">25000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex flex-row p-4 gap-1">
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#confirmModal"
+                            th:data-id="${car.id}">
+                        Delete
+                    </button>
+                    <button type="button"
+                            data-bs-toggle="modal"
+                            data-bs-target="#updateCarModal"
+                            onclick="fetchEditCar(this)"
+                            th:attr="data-id=${car.id}"
+                            class="btn btn-danger">Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createCarModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="createCarModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createCarModalLabel">Add Car</h5>
+            </div>
+            <div class="modal-body">
+                <form id="form-create-car"
+                      class="col"
+                      th:action="@{/car/save}"
+                      th:object="${car}"
+                      method="post">
+                    <label for="brand">Brand:</label>
+                    <input type="text" id="brand" class="form-control" th:field="*{brand}" required/>
+
+                    <label for="model">Model:</label>
+                    <input type="text" id="model" class="form-control" th:field="*{model}" required/>
+
+                    <label for="productionYear">Production year:</label>
+                    <input type="number" id="productionYear" class="form-control" th:field="*{productionYear}" min="1886" max="2100" required/>
+
+                    <label for="fuelType">Fuel type:</label>
+                    <select id="fuelType" class="form-select" th:field="*{fuelType}" required>
+                        <option value="Petrol">Petrol</option>
+                        <option value="Diesel">Diesel</option>
+                        <option value="Gas/Petrol">Gas/Petrol</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="Electric">Electric</option>
+                    </select>
+
+                    <label for="color">Color:</label>
+                    <input type="text" id="color" class="form-control" th:field="*{color}"/>
+
+                    <label for="mileage">Mileage (km):</label>
+                    <input type="number" id="mileage" class="form-control" th:field="*{mileage}" min="0" required/>
+
+                    <label for="price">Price ($):</label>
+                    <input type="number" step="0.01" id="price" class="form-control" th:field="*{price}" min="0" required/>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button form="form-create-car" type="submit" class="btn btn-danger">Add car</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="updateCarModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="updateCarModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateCarModalLabel">Update Car</h5>
+            </div>
+            <div class="modal-body">
+                <form id="form-update-car"
+                      class="col"
+                      th:action="@{/car/update}"
+                      th:object="${carEdit}"
+                      method="post">
+
+                    <label for="carIdUpdate">Car ID:</label>
+                    <input type="text" id="carIdUpdate" class="form-control" th:field="*{id}" readonly/>
+
+                    <label for="brandUpdate">Brand:</label>
+                    <input type="text" id="brandUpdate" class="form-control" th:field="*{brand}" required/>
+
+                    <label for="modelUpdate">Model:</label>
+                    <input type="text" id="modelUpdate" class="form-control" th:field="*{model}" required/>
+
+                    <label for="productionYearUpdate">Production year:</label>
+                    <input type="number" id="productionYearUpdate" class="form-control" th:field="*{productionYear}" min="1886" max="2100" required/>
+
+                    <label for="fuelTypeUpdate">Fuel type:</label>
+                    <select id="fuelTypeUpdate" class="form-select" th:field="*{fuelType}" required>
+                        <option value="Petrol">Petrol</option>
+                        <option value="Diesel">Diesel</option>
+                        <option value="Gas/Petrol">Gas/Petrol</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="Electric">Electric</option>
+                    </select>
+
+                    <label for="colorUpdate">Color:</label>
+                    <input type="text" id="colorUpdate" class="form-control" th:field="*{color}"/>
+
+                    <label for="mileageUpdate">Mileage (km):</label>
+                    <input type="number" id="mileageUpdate" class="form-control" th:field="*{mileage}" min="0" required/>
+
+                    <label for="priceUpdate">Price ($):</label>
+                    <input type="number" step="0.01" id="priceUpdate" class="form-control" th:field="*{price}" min="0" required/>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button form="form-update-car" type="submit" class="btn btn-danger">Update car</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="confirmModalLabel">Confirm Delete</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-delete-car" method="post">
+                    <p>Are you sure you want to delete this car with ID: <span id="spn-delete-id"></span>?</p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="form-delete-car" class="btn btn-danger">Delete car</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+<script>
+
+    const fetchEditCar = async (button) => {
+        const id = button.dataset.id;
+
+        const response = await fetch(`/car/${id}`);
+
+        if (!response.ok) {
+            console.error("Failed to load car:", response.status);
+            return;
+        }
+
+        const car = await response.json();
+
+        document.getElementById('carIdUpdate').value = car.id;
+        document.getElementById('brandUpdate').value = car.brand;
+        document.getElementById('modelUpdate').value = car.model;
+        document.getElementById('productionYearUpdate').value = car.productionYear;
+        document.getElementById('fuelTypeUpdate').value = car.fuelType;
+        document.getElementById('colorUpdate').value = car.color ?? '';
+        document.getElementById('mileageUpdate').value = car.mileage;
+        document.getElementById('priceUpdate').value = car.price;
+    };
+
+    document.getElementById('confirmModal').addEventListener('show.bs.modal', (event) => {
+        const id = event.relatedTarget.getAttribute('data-id');
+
+        document.getElementById('spn-delete-id').textContent = id;
+        document.getElementById('form-delete-car').action = `/car/delete/${id}`;
+    });
+
+</script>
+</body>
+</html>
